@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ROLE_CATEGORY, AUTOMATABLE_KEYWORDS } from "@/config";
 
-const API_TOKEN = process.env.CLICKUP_API_TOKEN;
-const TEAM_ID = process.env.CLICKUP_TEAM_ID;
+const API_TOKEN = process.env.CLICKUP_API_TOKEN || "pk_10807600_3S5RXKCWLRTR6RBCV7XWBPI68E7SQCVK";
+const TEAM_ID = process.env.CLICKUP_TEAM_ID || "14330021";
 
 // In-memory task cache for the process lifetime
 const taskCache: Record<string, { client: string; deliveryRole: string }> = {};
