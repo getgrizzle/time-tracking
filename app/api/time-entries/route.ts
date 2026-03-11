@@ -93,6 +93,7 @@ export async function GET(req: NextRequest) {
 
     if (!res.ok) {
       const text = await res.text();
+      console.error(`[ClickUp] API error status=${res.status}`, text);
       return NextResponse.json(
         { error: `ClickUp API error: ${res.status}`, details: text },
         { status: res.status }
@@ -101,12 +102,15 @@ export async function GET(req: NextRequest) {
 
     const data = await res.json();
     const entries: unknown[] = data.data ?? [];
+    console.log(`[ClickUp] page=${page} status=${res.status} entries=${entries.length}`);
     allEntries.push(...entries);
 
     // ClickUp returns up to 50 per page; if fewer returned, we're done
     if (entries.length < 50) break;
     page++;
   }
+
+  console.log(`[ClickUp] total entries: ${allEntries.length}`);
 
   // Collect unique task IDs
   const taskIds = [
