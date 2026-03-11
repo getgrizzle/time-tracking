@@ -61,6 +61,22 @@ async function fetchTaskDetails(
   }
 }
 
+async function fetchAllMemberIds(): Promise<string[]> {
+  const res = await fetch("https://api.clickup.com/api/v2/team", {
+    headers: { Authorization: API_TOKEN },
+    next: { revalidate: 0 },
+  });
+  if (!res.ok) return [];
+  const data = await res.json();
+  const ids: string[] = [];
+  for (const team of data.teams ?? []) {
+    for (const member of team.members ?? []) {
+      if (member.user?.id) ids.push(String(member.user.id));
+    }
+  }
+  return ids;
+}
+
 export async function GET(req: NextRequest) {
   if (!API_TOKEN || !TEAM_ID) {
     return NextResponse.json(
@@ -75,6 +91,9 @@ export async function GET(req: NextRequest) {
   const start = searchParams.get("start") ?? String(thirtyDaysAgo);
   const end = searchParams.get("end") ?? String(now);
 
+  const memberIds = await fetchAllMemberIds();
+  console.log(`[ClickUp] fetching for ${memberIds.length} members:`, memberIds);
+
   // Fetch all time entries (paginate if needed)
   const allEntries: unknown[] = [];
   let page = 0;
@@ -85,6 +104,9 @@ export async function GET(req: NextRequest) {
     url.searchParams.set("start_date", start);
     url.searchParams.set("end_date", end);
     url.searchParams.set("page", String(page));
+    if (memberIds.length > 0) {
+      url.searchParams.set("assignee", memberIds.join(","));
+    }
 
     console.log(`[ClickUp] fetching: ${url.toString()}`);
     const res = await fetch(url.toString(), {
