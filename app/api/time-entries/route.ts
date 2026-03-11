@@ -103,6 +103,7 @@ export async function GET(req: NextRequest) {
     const data = await res.json();
     const entries: unknown[] = data.data ?? [];
     console.log(`[ClickUp] page=${page} status=${res.status} entries=${entries.length}`);
+    if (entries.length === 0) console.log(`[ClickUp] raw response keys:`, Object.keys(data), JSON.stringify(data).slice(0, 500));
     allEntries.push(...entries);
 
     // ClickUp returns up to 50 per page; if fewer returned, we're done
