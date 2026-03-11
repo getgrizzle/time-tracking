@@ -133,8 +133,8 @@ export async function GET(req: NextRequest) {
     ),
   ];
 
-  // Fetch task details in parallel (batches of 10 to avoid rate limits)
-  const BATCH = 10;
+  // Fetch task details in parallel (batches of 100 to avoid rate limits)
+  const BATCH = 100;
   for (let i = 0; i < taskIds.length; i += BATCH) {
     await Promise.all(taskIds.slice(i, i + BATCH).map(fetchTaskDetails));
   }
