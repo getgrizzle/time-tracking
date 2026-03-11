@@ -86,6 +86,7 @@ export async function GET(req: NextRequest) {
     url.searchParams.set("end_date", end);
     url.searchParams.set("page", String(page));
 
+    console.log(`[ClickUp] fetching: ${url.toString()}`);
     const res = await fetch(url.toString(), {
       headers: { Authorization: API_TOKEN },
       next: { revalidate: 0 },
@@ -100,10 +101,10 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const data = await res.json();
+    const rawText = await res.text();
+    console.log(`[ClickUp] page=${page} status=${res.status} raw:`, rawText.slice(0, 1000));
+    const data = JSON.parse(rawText);
     const entries: unknown[] = data.data ?? [];
-    console.log(`[ClickUp] page=${page} status=${res.status} entries=${entries.length}`);
-    if (entries.length === 0) console.log(`[ClickUp] raw response keys:`, Object.keys(data), JSON.stringify(data).slice(0, 500));
     allEntries.push(...entries);
 
     // ClickUp returns up to 50 per page; if fewer returned, we're done
