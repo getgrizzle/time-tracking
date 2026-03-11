@@ -94,45 +94,33 @@ export async function GET(req: NextRequest) {
   const memberIds = await fetchAllMemberIds();
   console.log(`[ClickUp] fetching for ${memberIds.length} members:`, memberIds);
 
-  // Fetch all time entries (paginate if needed)
-  const allEntries: unknown[] = [];
-  let page = 0;
-  while (true) {
-    const url = new URL(
-      `https://api.clickup.com/api/v2/team/${TEAM_ID}/time_entries`
-    );
-    url.searchParams.set("start_date", start);
-    url.searchParams.set("end_date", end);
-    url.searchParams.set("page", String(page));
-    if (memberIds.length > 0) {
-      url.searchParams.set("assignee", memberIds.join(","));
-    }
-
-    console.log(`[ClickUp] fetching: ${url.toString()}`);
-    const res = await fetch(url.toString(), {
-      headers: { Authorization: API_TOKEN },
-      next: { revalidate: 0 },
-    });
-
-    if (!res.ok) {
-      const text = await res.text();
-      console.error(`[ClickUp] API error status=${res.status}`, text);
-      return NextResponse.json(
-        { error: `ClickUp API error: ${res.status}`, details: text },
-        { status: res.status }
-      );
-    }
-
-    const rawText = await res.text();
-    console.log(`[ClickUp] page=${page} status=${res.status} raw:`, rawText.slice(0, 1000));
-    const data = JSON.parse(rawText);
-    const entries: unknown[] = data.data ?? [];
-    allEntries.push(...entries);
-
-    // ClickUp returns up to 50 per page; if fewer returned, we're done
-    if (entries.length < 50) break;
-    page++;
+  // ClickUp time_entries endpoint returns all results in a single response (no pagination)
+  const url = new URL(
+    `https://api.clickup.com/api/v2/team/${TEAM_ID}/time_entries`
+  );
+  url.searchParams.set("start_date", start);
+  url.searchParams.set("end_date", end);
+  if (memberIds.length > 0) {
+    url.searchParams.set("assignee", memberIds.join(","));
   }
+
+  console.log(`[ClickUp] fetching: ${url.toString()}`);
+  const res = await fetch(url.toString(), {
+    headers: { Authorization: API_TOKEN },
+    next: { revalidate: 0 },
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error(`[ClickUp] API error status=${res.status}`, text);
+    return NextResponse.json(
+      { error: `ClickUp API error: ${res.status}`, details: text },
+      { status: res.status }
+    );
+  }
+
+  const data = await res.json();
+  const allEntries: unknown[] = data.data ?? [];
 
   console.log(`[ClickUp] total entries: ${allEntries.length}`);
 
